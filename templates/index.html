@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisas - Comparativo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🔎 Comparativo de Pesquisas</h1>
+        <p>Digite o <b>nome completo</b> de uma pessoa para testar:</p>
+        <form id="formBusca">
+            <input type="text" id="termo" name="termo" placeholder="Ex: Maria Silva" required autocomplete="off">
+            <button type="submit">Buscar</button>
+        </form>
+        <p class="info">A tabela contém {{ total_registros }} registros gerados automaticamente.</p>
+    </div>
+
+    <div class="tabela">
+        <div class="banco-dados">
+            <h2>📋 Banco de Dados</h2>
+            <p class="registro-info">
+                Mostrando {{ (page - 1) * 25 + 1 }} a {{ [page * 25, total_registros] | min }} de {{ total_registros }} registros
+            </p>
+            <table>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Idade</th>
+                </tr>
+                {% for pessoa in pessoas %}
+                <tr>
+                    <td>{{ pessoa.nome }}</td>
+                    <td>{{ pessoa.email }}</td>
+                    <td>{{ pessoa.idade }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <!-- Paginação -->
+            <div class="pagination">
+                {% if page > 1 %}
+                <a href="?page=1" class="page-btn">« Primeira</a>
+                <a href="?page={{ page - 1 }}" class="page-btn">‹ Anterior</a>
+                {% endif %}
+
+                <span class="page-info">Página {{ page }} de {{ total_pages }}</span>
+
+                {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}" class="page-btn">Próxima ›</a>
+                <a href="?page={{ total_pages }}" class="page-btn">Última »</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Resultados -->
+    <div id="modalResultados" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h1 id="modalTitle">Resultados para ""</h1>
+
+            <table>
+                <tr>
+                    <th>Tipo de Pesquisa</th>
+                    <th>Tempo (ms)</th>
+                    <th>Encontrado?</th>
+                </tr>
+                <tr>
+                    <td>Sequencial</td>
+                    <td id="tempoSequencial">-</td>
+                    <td id="statusSequencial">-</td>
+                </tr>
+                <tr>
+                    <td>Indexada</td>
+                    <td id="tempoIndexada">-</td>
+                    <td id="statusIndexada">-</td>
+                </tr>
+                <tr>
+                    <td>HashMap</td>
+                    <td id="tempoHashmap">-</td>
+                    <td id="statusHashmap">-</td>
+                </tr>
+            </table>
+
+            <div id="cardDados" class="card hidden">
+                <h2>🧍 Dados Encontrados</h2>
+                <p><b>Nome:</b> <span id="resultNome">-</span></p>
+                <p><b>Email:</b> <span id="resultEmail">-</span></p>
+                <p><b>Idade:</b> <span id="resultIdade">-</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formBusca = document.getElementById('formBusca');
+        const modal = document.getElementById('modalResultados');
+        const closeBtn = document.querySelector('.close');
+        const termoInput = document.getElementById('termo');
+
+        // Fechar modal ao clicar no X
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Enviar formulário via AJAX
+        formBusca.onsubmit = function(e) {
+            e.preventDefault();
+
+            const termo = termoInput.value;
+
+            fetch('/buscar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'termo=' + encodeURIComponent(termo)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Atualizar título
+                document.getElementById('modalTitle').innerText = `Resultados para "${termo}"`;
+
+                // Atualizar tempos
+                document.getElementById('tempoSequencial').innerText = data.tempos.sequencial + ' ms';
+                document.getElementById('tempoIndexada').innerText = data.tempos.indexada + ' ms';
+                document.getElementById('tempoHashmap').innerText = data.tempos.hashmap + ' ms';
+
+                // Atualizar status
+                document.getElementById('statusSequencial').innerText = data.resultados.sequencial ? '✅' : '❌';
+                document.getElementById('statusIndexada').innerText = data.resultados.indexada ? '✅' : '❌';
+                document.getElementById('statusHashmap').innerText = data.resultados.hashmap ? '✅' : '❌';
+
+                // Mostrar dados se encontrado
+                const cardDados = document.getElementById('cardDados');
+                if (data.resultados.hashmap) {
+                    document.getElementById('resultNome').innerText = data.resultados.hashmap.nome;
+                    document.getElementById('resultEmail').innerText = data.resultados.hashmap.email;
+                    document.getElementById('resultIdade').innerText = data.resultados.hashmap.idade;
+                    cardDados.classList.remove('hidden');
+                } else {
+                    cardDados.classList.add('hidden');
+                }
+
+                // Exibir modal
+                modal.style.display = 'block';
+            })
+            .catch(error => {
+                alert('Erro ao buscar: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
