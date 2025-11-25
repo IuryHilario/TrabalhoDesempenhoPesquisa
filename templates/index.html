@@ -40,18 +40,17 @@
 
             <!-- Paginação -->
             <div class="pagination">
-                {% if page > 1 %}
-                <a href="?page=1" class="page-btn">« Primeira</a>
-                <a href="?page={{ page - 1 }}" class="page-btn">‹ Anterior</a>
-                {% endif %}
+                <a href="?page=1" class="page-btn" {% if page == 1 %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Primeiro</a>
+                <a href="?page={{ page - 1 }}" class="page-btn" {% if page == 1 %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Anterior</a>
 
-                <span class="page-info">Página {{ page }} de {{ total_pages }}</span>
+                <form class="page-form" onsubmit="event.preventDefault(); var p = parseInt(this.pageNum.value); if(p >= 1 && p <= {{ total_pages }}) window.location.href='?page=' + p;">
+                    <input type="number" name="pageNum" class="page-input" value="{{ page }}" min="1" max="{{ total_pages }}" title="Digite o número da página">
+                </form>
 
-                {% if page < total_pages %}
-                <a href="?page={{ page + 1 }}" class="page-btn">Próxima ›</a>
-                <a href="?page={{ total_pages }}" class="page-btn">Última »</a>
-                {% endif %}
+                <a href="?page={{ page + 1 }}" class="page-btn" {% if page == total_pages %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Próximo</a>
+                <a href="?page={{ total_pages }}" class="page-btn" {% if page == total_pages %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Último</a>
             </div>
+            <p class="total-pages">Total de páginas: {{ total_pages }}</p>
         </div>
     </div>
 

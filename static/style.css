@@ -132,31 +132,61 @@ th {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
 .page-btn {
-    padding: 8px 12px;
+    padding: 8px 15px;
     background: #0077cc;
     color: white;
     text-decoration: none;
     border-radius: 5px;
     font-size: 0.9rem;
-    transition: background 0.3s;
+    transition: all 0.3s;
+    font-weight: 500;
 }
 
 .page-btn:hover {
     background: #005fa3;
 }
 
-.page-info {
-    padding: 8px 15px;
-    background: #f0f0f0;
+.page-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+}
+
+.page-input {
+    width: 60px;
+    padding: 8px 10px;
+    border: 2px solid #0077cc;
     border-radius: 5px;
-    font-weight: bold;
-    color: #333;
     font-size: 0.9rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: #005fa3;
+    box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.1);
+}
+
+.page-total {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.total-pages {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
 }
 
 .info {
@@ -288,8 +318,13 @@ th {
         font-size: 0.8rem;
     }
 
-    .page-info {
-        padding: 6px 10px;
+    .page-input {
+        width: 50px;
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
+
+    .page-total {
         font-size: 0.8rem;
     }
 
