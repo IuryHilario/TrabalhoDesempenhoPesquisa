@@ -9,7 +9,6 @@ async function executeSearch() {
         return;
     }
 
-    // Desabilitar botão e mostrar loading
     searchBtn.disabled = true;
     searchBtn.innerHTML = `
         <div class="spinner"></div>
@@ -81,7 +80,7 @@ function displayResults(data) {
                     </div>
                     <div class="result-info">
                         <h3>Busca Indexada</h3>
-                        <p>Busca binária em lista ordenada</p>
+                        <p>Índice por primeira letra para reduzir busca</p>
                     </div>
                 </div>
                 <div class="result-time">
@@ -169,7 +168,6 @@ function createPlayerCard(player) {
     `;
 }
 
-// Permitir busca com Enter
 document.getElementById('playerId').addEventListener('keypress', function(event) {
     if (event.key === 'Enter') {
         executeSearch();
