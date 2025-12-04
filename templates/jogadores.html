@@ -114,19 +114,30 @@
             const html = players.map(player => `
                 <div class="player-card">
                     <div class="player-card-header">
-                        <div class="player-card-id">#${player.id}</div>
-                        <div class="player-card-name">
-                            <h4>${player.name}</h4>
-                            <div class="player-card-rank">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="8" r="6"></circle>
-                                    <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
-                                </svg>
-                                <span>${player.rank}</span>
-                                <span>|</span>
-                                <span>MMR: ${player.mmr}</span>
+                        <div class="player-card-info">
+                            <div class="player-card-id">#${player.id}</div>
+                            <div class="player-card-name">
+                                <h4>${player.name}</h4>
+                                <div class="player-card-rank">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="8" r="6"></circle>
+                                        <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+                                    </svg>
+                                    <span>${player.rank}</span>
+                                    <span>|</span>
+                                    <span>MMR: ${player.mmr}</span>
+                                </div>
                             </div>
                         </div>
+                        <button class="copy-button" onclick="copyPlayerName('${player.name}', this)" title="Copiar nome do jogador">
+                            <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </button>
                     </div>
                     <div class="player-card-stats">
                         <div class="player-card-stat">
@@ -214,6 +225,64 @@
                 event.preventDefault();
                 goToInputPage();
             }
+        }
+
+        function copyPlayerName(name, button) {
+            navigator.clipboard.writeText(name).then(() => {
+                showCopySuccess(button);
+                showCopyMessage(name);
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = name;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showCopySuccess(button);
+                showCopyMessage(name);
+            });
+        }
+
+        function showCopySuccess(button) {
+            const copyIcon = button.querySelector('.copy-icon');
+            const checkIcon = button.querySelector('.check-icon');
+
+            copyIcon.style.display = 'none';
+            checkIcon.style.display = 'block';
+
+            button.classList.add('copied');
+
+            setTimeout(() => {
+                copyIcon.style.display = 'block';
+                checkIcon.style.display = 'none';
+                button.classList.remove('copied');
+            }, 2000);
+        }
+
+        function showCopyMessage(name) {
+            const existingMessage = document.querySelector('.copy-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const message = document.createElement('div');
+            message.className = 'copy-message';
+            message.innerHTML = `
+                <div class="copy-message-content">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Nome copiado: ${name}
+                </div>
+            `;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.remove();
+                }
+            }, 3000);
         }
 
         loadPlayers(1);
