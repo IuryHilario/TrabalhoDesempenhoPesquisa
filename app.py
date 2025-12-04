@@ -1,82 +1,116 @@
-from flask import Flask, render_template, request, jsonify
-import sqlite3, time
-import pesquisa
+from flask import Flask, render_template, jsonify, request
+import time
+import sqlite3
+import bisect
 
 app = Flask(__name__)
 
-# Rota principal
+def carregar_dados():
+    conn = sqlite3.connect('dados.db')
+    cur = conn.cursor()
+    cur.execute("SELECT id, nome, partidas, rank, mmr, gols, assists, saves, winRate FROM pessoas")
+    rows = cur.fetchall()
+    conn.close()
+
+    jogadores = []
+    for row in rows:
+        jogadores.append({
+            'id': row[0],
+            'name': row[1],
+            'matches': row[2],
+            'rank': row[3],
+            'mmr': row[4],
+            'goals': row[5],
+            'assists': row[6],
+            'saves': row[7],
+            'winRate': round(row[8], 2)
+        })
+
+    return jogadores
+
+JOGADORES = carregar_dados()
+
+JOGADORES_ORDENADOS = sorted(JOGADORES, key=lambda x: x['id'])
+IDS_ORDENADOS = [j['id'] for j in JOGADORES_ORDENADOS]
+
+JOGADORES_HASH = {j['id']: j for j in JOGADORES}
+
+print(f"✅ {len(JOGADORES)} jogadores carregados com sucesso!")
+
+
 @app.route('/')
 def index():
-    # Paginação
+    return render_template('index.html')
+
+@app.route('/jogadores')
+def jogadores():
+    return render_template('jogadores.html')
+
+@app.route('/api/jogadores')
+def api_jogadores():
     page = request.args.get('page', 1, type=int)
-    per_page = 25
-    offset = (page - 1) * per_page
+    per_page = request.args.get('per_page', 50, type=int)
 
-    conn = sqlite3.connect('dados.db')
-    cur = conn.cursor()
+    # Paginação
+    start = (page - 1) * per_page
+    end = start + per_page
 
-    # Conta total de registros
-    cur.execute("SELECT COUNT(*) FROM pessoas")
-    total_registros = cur.fetchone()[0]
+    return jsonify({
+        'jogadores': JOGADORES[start:end],
+        'total': len(JOGADORES),
+        'page': page,
+        'per_page': per_page,
+        'total_pages': (len(JOGADORES) + per_page - 1) // per_page
+    })
 
-    # Busca registros da página atual
-    cur.execute("SELECT nome, email, idade FROM pessoas LIMIT ? OFFSET ?", (per_page, offset))
-    pessoas = [{"nome": n, "email": e, "idade": i} for n, e, i in cur.fetchall()]
-    conn.close()
+@app.route('/search', methods=['POST'])
+def search():
+    data = request.get_json()
+    player_id = int(data.get('id'))
 
-    # Calcula total de páginas
-    total_pages = (total_registros + per_page - 1) // per_page
+    results = {}
 
-    return render_template('index.html',
-                         pessoas=pessoas,
-                         total_registros=total_registros,
-                         page=page,
-                         total_pages=total_pages)
+    # BUSCA SEQUENCIAL
+    start = time.perf_counter()
+    sequential_result = None
+    for jogador in JOGADORES:
+        if jogador['id'] == player_id:
+            sequential_result = jogador
+            break
+    end = time.perf_counter()
 
+    results['sequential'] = {
+        'time': round((end - start) * 1000, 6),
+        'found': sequential_result is not None,
+        'player': sequential_result
+    }
 
-# Rota de Resultado de Busca
-@app.route('/buscar', methods=['POST'])
-def buscar():
-    termo = request.form['termo']
+    # BUSCA INDEXADA
+    start = time.perf_counter()
+    idx = bisect.bisect_left(IDS_ORDENADOS, player_id)
+    indexed_result = None
+    if idx < len(IDS_ORDENADOS) and IDS_ORDENADOS[idx] == player_id:
+        indexed_result = JOGADORES_ORDENADOS[idx]
+    end = time.perf_counter()
 
-    conn = sqlite3.connect('dados.db')
-    cur = conn.cursor()
-    cur.execute("SELECT nome, email, idade FROM pessoas")
-    registros = [{"nome": n, "email": e, "idade": i} for n, e, i in cur.fetchall()]
-    conn.close()
+    results['indexed'] = {
+        'time': round((end - start) * 1000, 6),
+        'found': indexed_result is not None,
+        'player': indexed_result
+    }
 
-    # Cria estruturas
-    indice = {}
-    for r in registros:
-        primeira_letra = r["nome"].lower()[0]
-        if primeira_letra not in indice:
-            indice[primeira_letra] = []
-        indice[primeira_letra].append(r)
+    # BUSCA HASHMAP
+    start = time.perf_counter()
+    hashmap_result = JOGADORES_HASH.get(player_id)
+    end = time.perf_counter()
 
-    tabela_hash = {r["nome"].lower(): r for r in registros}
+    results['hashmap'] = {
+        'time': round((end - start) * 1000, 6),
+        'found': hashmap_result is not None,
+        'player': hashmap_result
+    }
 
-    tempos = {}
-    resultados = {}
-
-    # --- Sequencial ---
-    t1 = time.time()
-    resultados["sequencial"] = pesquisa.busca_sequencial(registros, termo)
-    tempos["sequencial"] = round((time.time() - t1) * 1000, 3)
-
-    # --- Indexada ---
-    t2 = time.time()
-    resultados["indexada"] = pesquisa.busca_indexada(indice, termo)
-    tempos["indexada"] = round((time.time() - t2) * 1000, 3)
-
-    # --- HashMap ---
-    t3 = time.time()
-    resultados["hashmap"] = pesquisa.busca_hash(tabela_hash, termo)
-    tempos["hashmap"] = round((time.time() - t3) * 1000, 3)
-
-    return jsonify(
-        tempos=tempos,
-        resultados=resultados
-    )
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

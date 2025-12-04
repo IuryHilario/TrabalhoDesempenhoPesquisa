@@ -3,159 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesquisas - Comparativo</title>
+    <title>Rocket League – Caçador de Jogadores</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="background-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
     <div class="container">
-        <h1>🔎 Comparativo de Pesquisas</h1>
-        <p>Digite o <b>nome completo</b> de uma pessoa para testar:</p>
-        <form id="formBusca">
-            <input type="text" id="termo" name="termo" placeholder="Ex: Maria Silva" required autocomplete="off">
-            <button type="submit">Buscar</button>
-        </form>
-        <p class="info">A tabela contém {{ total_registros }} registros gerados automaticamente.</p>
-    </div>
-
-    <div class="tabela">
-        <div class="banco-dados">
-            <h2>📋 Banco de Dados</h2>
-            <p class="registro-info">
-                Mostrando {{ (page - 1) * 25 + 1 }} a {{ [page * 25, total_registros] | min }} de {{ total_registros }} registros
-            </p>
-            <table>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Idade</th>
-                </tr>
-                {% for pessoa in pessoas %}
-                <tr>
-                    <td>{{ pessoa.nome }}</td>
-                    <td>{{ pessoa.email }}</td>
-                    <td>{{ pessoa.idade }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-
-            <!-- Paginação -->
-            <div class="pagination">
-                <a href="?page=1" class="page-btn" {% if page == 1 %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Primeiro</a>
-                <a href="?page={{ page - 1 }}" class="page-btn" {% if page == 1 %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Anterior</a>
-
-                <form class="page-form" onsubmit="event.preventDefault(); var p = parseInt(this.pageNum.value); if(p >= 1 && p <= {{ total_pages }}) window.location.href='?page=' + p;">
-                    <input type="number" name="pageNum" class="page-input" value="{{ page }}" min="1" max="{{ total_pages }}" title="Digite o número da página">
-                </form>
-
-                <a href="?page={{ page + 1 }}" class="page-btn" {% if page == total_pages %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Próximo</a>
-                <a href="?page={{ total_pages }}" class="page-btn" {% if page == total_pages %}style="pointer-events: none; opacity: 0.5;"{% endif %}>Último</a>
+        <header class="header">
+            <div class="header-content">
+                <div class="header-icons">
+                    <svg class="icon-zap" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <h1 class="title">Rocket League<br>Caçador de Jogadores</h1>
+                    <svg class="icon-zap blue" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <p class="subtitle">ALGORITMOS DE TEMPO DE PESQUISA</p>
             </div>
-            <p class="total-pages">Total de páginas: {{ total_pages }}</p>
+        </header>
+
+        <div class="status-badge">
+            <span class="divider">|</span>
+            <span class="player-count">10.000 JOGADORES CADASTRADOS</span>
+            <span class="divider">|</span>
+            <a href="/jogadores" class="ver-todos-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                VER TODOS
+            </a>
         </div>
-    </div>
 
-    <!-- Modal de Resultados -->
-    <div id="modalResultados" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h1 id="modalTitle">Resultados para ""</h1>
+        <!-- Painel de Busca -->
+        <div class="search-console">
+            <div class="console-header">
+                <div class="console-dot red"></div>
+                <div class="console-dot yellow"></div>
+                <div class="console-dot green"></div>
+            </div>
 
-            <table>
-                <tr>
-                    <th>Tipo de Pesquisa</th>
-                    <th>Tempo (ms)</th>
-                    <th>Encontrado?</th>
-                </tr>
-                <tr>
-                    <td>Sequencial</td>
-                    <td id="tempoSequencial">-</td>
-                    <td id="statusSequencial">-</td>
-                </tr>
-                <tr>
-                    <td>Indexada</td>
-                    <td id="tempoIndexada">-</td>
-                    <td id="statusIndexada">-</td>
-                </tr>
-                <tr>
-                    <td>HashMap</td>
-                    <td id="tempoHashmap">-</td>
-                    <td id="statusHashmap">-</td>
-                </tr>
-            </table>
-
-            <div id="cardDados" class="card hidden">
-                <h2>🧍 Dados Encontrados</h2>
-                <p><b>Nome:</b> <span id="resultNome">-</span></p>
-                <p><b>Email:</b> <span id="resultEmail">-</span></p>
-                <p><b>Idade:</b> <span id="resultIdade">-</span></p>
+            <div class="search-input-group">
+                <label for="playerId">&gt; ID do Jogador</label>
+                <div class="input-wrapper">
+                    <input type="number" id="playerId" placeholder="Digite o ID [1-10000]" min="1" max="10000">
+                    <button id="searchBtn" onclick="executeSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        BUSCAR
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- Parte dos Resultados -->
+        <div id="results" class="results-container"></div>
     </div>
 
-    <script>
-        const formBusca = document.getElementById('formBusca');
-        const modal = document.getElementById('modalResultados');
-        const closeBtn = document.querySelector('.close');
-        const termoInput = document.getElementById('termo');
-
-        // Fechar modal ao clicar no X
-        closeBtn.onclick = function() {
-            modal.style.display = 'none';
-        }
-
-        // Fechar modal ao clicar fora dele
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Enviar formulário via AJAX
-        formBusca.onsubmit = function(e) {
-            e.preventDefault();
-
-            const termo = termoInput.value;
-
-            fetch('/buscar', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'termo=' + encodeURIComponent(termo)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Atualizar título
-                document.getElementById('modalTitle').innerText = `Resultados para "${termo}"`;
-
-                // Atualizar tempos
-                document.getElementById('tempoSequencial').innerText = data.tempos.sequencial + ' ms';
-                document.getElementById('tempoIndexada').innerText = data.tempos.indexada + ' ms';
-                document.getElementById('tempoHashmap').innerText = data.tempos.hashmap + ' ms';
-
-                // Atualizar status
-                document.getElementById('statusSequencial').innerText = data.resultados.sequencial ? '✅' : '❌';
-                document.getElementById('statusIndexada').innerText = data.resultados.indexada ? '✅' : '❌';
-                document.getElementById('statusHashmap').innerText = data.resultados.hashmap ? '✅' : '❌';
-
-                // Mostrar dados se encontrado
-                const cardDados = document.getElementById('cardDados');
-                if (data.resultados.hashmap) {
-                    document.getElementById('resultNome').innerText = data.resultados.hashmap.nome;
-                    document.getElementById('resultEmail').innerText = data.resultados.hashmap.email;
-                    document.getElementById('resultIdade').innerText = data.resultados.hashmap.idade;
-                    cardDados.classList.remove('hidden');
-                } else {
-                    cardDados.classList.add('hidden');
-                }
-
-                // Exibir modal
-                modal.style.display = 'block';
-            })
-            .catch(error => {
-                alert('Erro ao buscar: ' + error);
-            });
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
