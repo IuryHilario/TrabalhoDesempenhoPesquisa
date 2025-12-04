@@ -1,7 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import time
 import sqlite3
-import bisect
 
 app = Flask(__name__)
 
@@ -30,10 +29,18 @@ def carregar_dados():
 
 JOGADORES = carregar_dados()
 
-JOGADORES_ORDENADOS = sorted(JOGADORES, key=lambda x: x['id'])
-IDS_ORDENADOS = [j['id'] for j in JOGADORES_ORDENADOS]
+JOGADORES_ORDENADOS = sorted(JOGADORES, key=lambda x: x['name'].lower())
+NOMES_ORDENADOS = [j['name'].lower() for j in JOGADORES_ORDENADOS]
 
-JOGADORES_HASH = {j['id']: j for j in JOGADORES}
+INDICE_LETRAS = {}
+for i, nome in enumerate(NOMES_ORDENADOS):
+    letra = nome[0] if nome else ''
+    if letra not in INDICE_LETRAS:
+        INDICE_LETRAS[letra] = [i, i]
+    else:
+        INDICE_LETRAS[letra][1] = i
+
+JOGADORES_HASH = {j['name'].lower(): j for j in JOGADORES}
 
 print(f"✅ {len(JOGADORES)} jogadores carregados com sucesso!")
 
@@ -51,7 +58,6 @@ def api_jogadores():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
 
-    # Paginação
     start = (page - 1) * per_page
     end = start + per_page
 
@@ -66,7 +72,7 @@ def api_jogadores():
 @app.route('/search', methods=['POST'])
 def search():
     data = request.get_json()
-    player_id = int(data.get('id'))
+    player_name = data.get('name').strip()
 
     results = {}
 
@@ -74,7 +80,7 @@ def search():
     start = time.perf_counter()
     sequential_result = None
     for jogador in JOGADORES:
-        if jogador['id'] == player_id:
+        if jogador['name'].lower() == player_name.lower():
             sequential_result = jogador
             break
     end = time.perf_counter()
@@ -87,10 +93,18 @@ def search():
 
     # BUSCA INDEXADA
     start = time.perf_counter()
-    idx = bisect.bisect_left(IDS_ORDENADOS, player_id)
     indexed_result = None
-    if idx < len(IDS_ORDENADOS) and IDS_ORDENADOS[idx] == player_id:
-        indexed_result = JOGADORES_ORDENADOS[idx]
+
+    search_name = player_name.lower()
+    primeira_letra = search_name[0] if search_name else ''
+
+    if primeira_letra in INDICE_LETRAS:
+        inicio, fim = INDICE_LETRAS[primeira_letra]
+        for i in range(inicio, fim + 1):
+            if NOMES_ORDENADOS[i] == search_name:
+                indexed_result = JOGADORES_ORDENADOS[i]
+                break
+
     end = time.perf_counter()
 
     results['indexed'] = {
@@ -101,7 +115,7 @@ def search():
 
     # BUSCA HASHMAP
     start = time.perf_counter()
-    hashmap_result = JOGADORES_HASH.get(player_id)
+    hashmap_result = JOGADORES_HASH.get(player_name.lower())
     end = time.perf_counter()
 
     results['hashmap'] = {

@@ -181,7 +181,8 @@ body {
 }
 
 .status-badge {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 12px;
     padding: 12px 24px;
@@ -193,9 +194,14 @@ body {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.875rem;
     margin: 0 auto 48px;
-    display: flex;
     justify-content: center;
     width: fit-content;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 @media (max-width: 640px) {
@@ -808,20 +814,25 @@ body {
 .ver-todos-link {
     color: #60a5fa;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.3s;
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+    letter-spacing: 0.05em;
 }
 
 .ver-todos-link:hover {
-    color: #3b82f6;
+    color: #93c5fd;
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.8);
+    transform: scale(1.05);
 }
 
 .ver-todos-link svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.6));
 }
 
 /* Pagination Hidden */

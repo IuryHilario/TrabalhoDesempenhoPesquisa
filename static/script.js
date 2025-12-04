@@ -1,11 +1,11 @@
 async function executeSearch() {
-    const playerId = document.getElementById('playerId').value;
+    const playerName = document.getElementById('playerId').value;
     const searchBtn = document.getElementById('searchBtn');
     const resultsContainer = document.getElementById('results');
 
     // Validação
-    if (!playerId || playerId < 1 || playerId > 10000) {
-        alert('Por favor, insira um ID válido entre 1 e 10000');
+    if (!playerName || playerName.trim() === '') {
+        alert('Por favor, insira um nome válido');
         return;
     }
 
@@ -22,7 +22,7 @@ async function executeSearch() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ id: playerId })
+            body: JSON.stringify({ name: playerName })
         });
 
         const data = await response.json();
@@ -62,7 +62,7 @@ function displayResults(data) {
                     </div>
                 </div>
                 <div class="result-time">
-                    <div class="time-value">${data.sequential.time} ms</div>
+                    <div class="time-value">${data.sequential.time.toFixed(4)} ms</div>
                     <p class="complexity"></p>
                 </div>
             </div>
@@ -85,7 +85,7 @@ function displayResults(data) {
                     </div>
                 </div>
                 <div class="result-time">
-                    <div class="time-value">${data.indexed.time} ms</div>
+                    <div class="time-value">${data.indexed.time.toFixed(4)} ms</div>
                     <p class="complexity"></p>
                 </div>
             </div>
@@ -110,7 +110,7 @@ function displayResults(data) {
                     </div>
                 </div>
                 <div class="result-time">
-                    <div class="time-value">${data.hashmap.time} ms</div>
+                    <div class="time-value">${data.hashmap.time.toFixed(4)} ms</div>
                     <p class="complexity"></p>
                 </div>
             </div>
